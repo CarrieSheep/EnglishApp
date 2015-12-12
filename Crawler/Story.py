@@ -1,142 +1,125 @@
-#coding = utf-8
+#coding=utf-8
 __author__ = 'carrie'
+
 import re
-import chardet
 from urllib import urlopen,urlretrieve
 
-class PatStory():
 
+class PatStoryUrl():
 
+    #获取网页链接
     def getPageUrl(self):
         page_list = []
-        page_list.append('http://www.kekenet.com/menu/13407/')
-        for i in range(34,34):
+        for i in range(1,2):
             http = 'http://www.kekenet.com/menu/13407/List_%s' % i + '.shtml'
-            # print http
             page_list.append(http)
-        print 1, page_list
+        page_list.append('http://www.kekenet.com/menu/13407/')
+        # print 1, page_list
         return page_list
 
-
-    def getStoryUrl(self):
+    #获取每个故事的链接
+    def getStoryAndMP3Url(self):
         story_list = []
+        mp3_list = []
         page_list = self.getPageUrl()
-        # print 2, page_list
         for page in page_list:
             text = urlopen(page).read()
             text = str(text).replace('\r\n','')
             b = re.compile(r'http://www.kekenet.com/menu/2.*?shtml')
             list = re.findall(b, text)
-            # print 3, list
+            # print 2, list
             for story in list:
-                story_list.append(story)
-        print 4, story_list
-        return story_list
+                mp3_url = story.replace('menu', 'mp3')
+                text = urlopen(mp3_url).read()
+                a = re.search(r'http://xia.*?mp3', text)
+                if a != None:
+                    story_list.append(story)
+                    mp3_list.append(a.group())
+        dict = {'story':story_list,'mp3':mp3_list}
+        # print 3, story_list
+        # print 3, mp3_list
+        return dict
 
+#爬取每个故事的标题,内容,音频和图片
+class PatStory():
 
+    #爬取故事的源代码
     def getStorySC(self):
-        sc_list = []
-        story_list = self.getStoryUrl()
-        for story in story_list:
-            text = urlopen(story).read()
-            text = str(text).replace('\r\n', '')
-            sc_list.append(text)
-        # print 5, sc_list
-        return sc_list
+        text = urlopen(url).read()
+        sc = str(text).replace('\r\n', '')
+        # print 4, sc
+        return sc
 
-
-    def getContentAndTitle(self):
-        content_list = []
-        title_list = []
-        sc_list = self.getStorySC()
-        for content in sc_list:
-            a = re.compile(r'<div class="qh_.*?</div>')
-            article = re.findall(a, content)
-            essay = ''
-            title = ''
-            count = 0
+    #爬取每个故事的内容
+    def getContent(self):
+        a = re.compile('<div class="qh_.*?</div>')
+        article = re.findall(a, sc)
+        content = ''
+        if article != []:
             for item in article:
-                item = re.sub(r'<.*?>', '', item).replace('&#39;', "'")
-                # print item
-                if count < 2:
-                    title = title + item + '  '
-                    count += 1
-                essay = essay + '\r\n' + item
-            content_list.append(essay)
-        contentAndTitle_dict = {'content':content_list,'title':title_list}
-        print 6, contentAndTitle_dict
-        return contentAndTitle_dict
+                item = re.sub(r'<.*?>', '', item).replace('&#39;', "'").replace('&quot;', '"')
+                content = content + item + '\r\n'
+        else:
+            content = ''
+        print 5, content
+        return content
 
+    #爬取每个故事的标题
+    def getTitle(self):
+        title = re.split('\r\n',content)
+        title = title[0]
+        print 6, title
+        return title
 
-    def getMP3Url(self):
-        mp3_list = []
-        mp3Url_list = []
-        story_list = self.getStoryUrl()
-        for story in story_list:
-            mp3_dowmload = story.replace('menu','mp3')
-            # print mp3_dowmload
-            text = urlopen(mp3_dowmload).read()
-            a = re.search(r'http://xia.*?mp3', text)
-            # print a
-            if a == None:
-                mp3Url_list.append('')
-            else:
-                mp3Url_list.append(a.group())
-        print 7, mp3Url_list
-        return mp3Url_list
-
-
+    #爬取每个故事的音频
     def getMP3(self):
-        i = 0
-        mp3Url_list = self.getMP3Url()
-        for mp3 in mp3Url_list:
-            if mp3 != []:
-                a = r'/home/carrie/downloads/story/mp3/' + str(i) + r'.mp3'
-                urlretrieve(mp3,a)
-            i += 1
+        a = r'/home/carrie/downloads/story/mp3/' + str(i) + r'.mp3'
+        urlretrieve(mp3, a)
 
-
-    def getPictureUrl(self):
-        sc_list = []
-        picture_list = []
-        for sc in sc_list:
-            pic_download = re.search(r'http://pic.kekenet.*?jpg', sc)
-            if pic_download != None:
-                pic_download = pic_download.group()
-                if len(pic_download) > 100:
-                    a = re.findall(r'http://pic.kekenet.*?jpeg', pic_download)
-                    if a == []:
-                        b = re.findall(r'http://pic.kekenet.*?JPG', pic_download)
-                        if b == []:
-                            pic_download =re.findall(r'http://pic.kekenet.*?png',pic_download)[0]
-                        else:
-                            pic_download = b[0]
-                    else:
-                        pic_download = a[0]
-            else:
-                pic_download = ''
-            print 8, pic_download
-            picture_list.append(pic_download)
-        return picture_list
-
-
+    #爬取每个故事的图片
     def getPicture(self):
-        i = 0
-        picture_list = self.getPictureUrl()
-        for picture in picture_list:
-            if picture != '':
-                if re.findall('png',picture) == []:
-                    a = r'/home/carrie/downloads/story/picture/' + str(i) + r'.jpg'
-                    urlretrieve(picture,a)
+        pic_url = re.search(r'http://pic.kekenet.*?jpg', sc)
+        if pic_url != None:
+            pic_url = pic_url.group()
+            if len(pic_url) > 100:
+                a = re.findall(r'http://pic.kekenet.*?jpeg', pic_url)
+                if a == []:
+                    b = re.findall(r'http://pic.kekenet.*?JPG', pic_url)
+                    if b == []:
+                        pic_url =re.findall(r'http://pic.kekenet.*?png',pic_url)[0]
+                    else:
+                        pic_url = b[0]
                 else:
-                    a = r'/home/carrie/downloads/story/picture/' + str(i) + r'.png'
-                    urlretrieve(picture,a)
-            i += 1
+                    pic_url = a[0]
+            if re.findall('png', pic_url) == []:
+                a = r'/home/carrie/downloads/story/picture/' + str(i) + r'.jpg'
+                urlretrieve(pic_url, a)
+            else:
+                a = r'/home/carrie/downloads/story/picture/' + str(i) + r'.png'
+                urlretrieve(pic_url, a)
 
+    #爬取每个故事的lrc文件
+    def getLrc(self):
+        lrc = mp3.replace('xia2','www')
+        lrc = lrc + '.lrc'
+        print lrc
+        a = r'/home/carrie/downloads/story/lrc/' + str(i) + r'.lrc'
+        urlretrieve(lrc, a)
 
 if __name__ == '__main__':
-    a = PatStory()
-    # a.getStoryUrl()
-    a.getContentAndTitle()
-    a.getMP3()
-    a.getPicture()
+    a = PatStoryUrl()
+    story_list = a.getStoryAndMP3Url()['story']
+    mp3_list = a.getStoryAndMP3Url()['mp3']
+    for i in range(0,len(story_list)):
+        url = story_list[i]
+        b = PatStory()
+        sc = b.getStorySC()
+        content = b.getContent()
+        if content != '':
+            b.getTitle()
+            mp3 = mp3_list[i]
+            # print mp3
+            b.getMP3()
+            b.getPicture()
+            b.getLrc()
+
