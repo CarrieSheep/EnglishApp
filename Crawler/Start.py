@@ -16,27 +16,33 @@ class GetUrlMethod():
         return page_list
 
     #获取每个故事的链接
-    def getStoryAndMP3Url(self,page_list,type):
+    def getStoryAndMP3UrlAndTitle(self,page_list,type):
         story_list = []
         mp3_list = []
+        title_list = []
         for page in page_list:
             text = urlopen(page).read()
-            text = str(text).replace('\r\n','')
-            #获取故事链接
-            matchstr = 'http://www.kekenet.com/' + type + '/2.*?shtml'
-            # print matchstr
-            b = re.compile(matchstr)
-            list = re.findall(b, text)
-            # print 2, list
-            for story in list:
+            text = str(text).replace('\r\n', '')
+            pattern= re.compile('http://www.kekenet.com/' + type + '/2.*?target')
+            pattern_url = re.compile('http://www.kekenet.com/' + type + '/2.*?shtml')
+            pattern_title = re.compile(r'《.*?target')
+            ulist = []
+            tlist = []
+            b = re.findall(pattern, text)
+            for item in b:
+                ulist.append(re.findall(pattern_url, item)[0])
+                title = re.findall(pattern_title, item)
+                tlist.append(re.sub(r'" target', '', title[0]))
+            for index in range(0,len(ulist)):
                 #获取MP3下载地址链接,查看MP3是否存在,若不存在,则该是链接不存储
-                mp3_url = story.replace(type, 'mp3')
+                mp3_url = ulist[index].replace(type, 'mp3')
                 text = urlopen(mp3_url).read()
                 a = re.search(r'http://xia.*?mp3', text)
                 if a != None:
-                    story_list.append(story)
+                    story_list.append(ulist[index])
                     mp3_list.append(a.group())
-        dict = {'story':story_list,'mp3':mp3_list}
+                    title_list.append(tlist[index])
+        dict = {'story': story_list, 'mp3': mp3_list, 'title': title_list}
         # print 3, story_list
         # print 3, mp3_list
         return dict
@@ -53,24 +59,46 @@ class PatStoryMethod():
         return sc
 
      #爬取每个故事的内容
-    def getContent(self,sc):
+    def getContent(self, sc):
         a = re.compile('<div class="qh_.*?</div>')
         article = re.findall(a, sc)
-        content = ''
-        if article != []:
+        content_zg = []
+        content_en = []
+        if article == []:
+            article = re.findall(r'<span id="article_eng">.*?<script>', sc)[0]
+            if article !=[]:
+                a = re.sub(r'<BR></FONT>', '@@@@', article)
+                a = re.sub(r'<BR><FONT.*?>', '@@@@', a)
+                a = re.sub(r'</FONT> <BR>', '@@@@', a)
+                a = re.sub(r'<BR></STRONG></FONT>', '@@@@', a)
+                a = re.sub(r'<P><FONT.*?>', '@@@@', a)
+                a = re.sub(r'<br />', '@@@@', a)
+                a = re.sub(r'<.*?>', '', a)
+                article = re.split('@@@@', a)
+            else:
+                article = []
+        if len(article) > 5:
+            num = 0
             for item in article:
                 item = re.sub(r'<.*?>', '', item).replace('&#39;', "'").replace('&quot;', '"')
-                content = content + item + '\r\n'
+                item = item.replace('&ldquo;', '"').replace('&rdquo;', '"').replace('&bull;', '·')
+                item = item.replace('&hellip;', '…').replace('&middot;','·')
+                if len(item) > 0:
+                    if num%2 == 0:
+                        content_en.append(item)
+                    else:
+                        content_zg.append(item)
+                    num = num + 1
+            content_dict = {'en': content_en, 'zg': content_zg}
         else:
-            content = ''
-        # print 5, content
-        return content
+            content_dict = {}
+        return content_dict
 
-    def getTitle(self,content):
-        title = re.split('\r\n', content)
-        title = title[0]
+    # def getTitle(self,content):
+    #     title = re.split('\r\n', content)
+    #     title = title[0]
         # print 6, title
-        return title
+        # return title
 
     #爬取每个故事的音频
     def getMP3(self, mp3, index, storeAdd):
