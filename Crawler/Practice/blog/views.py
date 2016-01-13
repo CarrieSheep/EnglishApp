@@ -19,3 +19,5 @@ def register(req):
     else:
         user = UserForm()
     return render_to_response('register.html', {'user':user})
+
+
