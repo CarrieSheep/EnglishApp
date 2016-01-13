@@ -41,15 +41,16 @@ class PatTitanicUrl():
                 print 1, title
                 date = patstory.getDate(sc)
                 print 2, date
-                mp3_path = patstory.getMP3(mp3_list[index], index, 'Titanic')
-                print 3, mp3_path
+                mp3_dict = patstory.getMP3AndTime(mp3_list[index], index, 'Titanic')
+                print 3, mp3_dict['mp3_time']
+                print 4, mp3_dict['mp3_path']
                 pic = 'http://pic.kekenet.com/2013/0203/5551359887061.jpg'
                 pic_path = patstory.getPicture(sc, index, 'Titanic', pic)
-                print 4, pic_path
+                print 5, pic_path
                 for i in range(0, len(content_dict['en'])):
-                    print content_dict['en'][i]
+                    print 6, content_dict['en'][i]
                     if i < len(content_dict['zg']):
-                        print content_dict['zg'][i]
+                        print 7, content_dict['zg'][i]
                 print '\n'
 
 if __name__ == '__main__':

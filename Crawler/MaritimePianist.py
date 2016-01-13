@@ -38,14 +38,16 @@ class PatMaritimePianist():
                 print 1, title
                 date = patstory.getDate(sc)
                 print 2, date
-                mp3_path = patstory.getMP3(mp3_list[index], index, 'MaritimePianist')
-                print 3, mp3_path
+                mp3_dict = patstory.getMP3AndTime(mp3_list[index], index, 'MaritimePianist')
+                print 3, mp3_dict['mp3_time']
+                print 4, mp3_dict['mp3_path']
                 pic = "http://pic.kekenet.com/2012/0223/20120223034042496.jpg"
                 pic_path = patstory.getPicture(sc, index, 'MaritimePianist', pic)
-                print 4, pic_path
-                for i in range(0,len(content_dict['en'])):
-                    print 5, content_dict['en'][i]
-                    print 6,content_dict['zg'][i]
+                print 5, pic_path
+                for i in range(0, len(content_dict['en'])):
+                    print 6, content_dict['en'][i]
+                    print 7, content_dict['zg'][i]
+                print '\n'
 
 
 
