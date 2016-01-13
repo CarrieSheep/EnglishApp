@@ -2,6 +2,7 @@ __author__ = 'carrie'
 #coding=utf-8
 import re
 from urllib import urlopen,urlretrieve
+import eyed3
 
 class GetUrlMethod():
 
@@ -101,10 +102,16 @@ class PatStoryMethod():
         # return title
 
     #爬取每个故事的音频
-    def getMP3(self, mp3, index, storeAdd):
+    def getMP3AndTime(self, mp3, index, storeAdd):
         mp3_path = r'/home/carrie/downloads/' + storeAdd + '/mp3/' + storeAdd + str(index) + r'.mp3'
         urlretrieve(mp3, mp3_path)
-        return mp3_path
+        audio = eyed3.load(mp3_path)
+        mp3_time = audio.info.time_secs
+        sec = mp3_time % 60
+        min = mp3_time / 60
+        mp3_time = str(min) + ':' + str(sec)
+        mp3_dict = {'mp3_path': mp3_path, 'mp3_time': mp3_time}
+        return mp3_dict
 
     #爬取每个故事的图片
     def getPicture(self, sc, index, storeAdd,pic):
